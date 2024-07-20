@@ -9,11 +9,6 @@ const port = 3000;
 
 const cors = require("cors");
 app.use(cors());
-
-// Parse JSON and URL-encoded bodies
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
-
 app.use((req, res, next) => {
   // Allow access from every, eliminate CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -25,6 +20,10 @@ app.use((req, res, next) => {
   // Allow request to continue and be handled by routes
   next();
 });
+
+// Parse JSON and URL-encoded bodies
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
 // PostgreSQL client configuration from environment variables
 const client = new Client({
