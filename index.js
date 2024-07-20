@@ -35,6 +35,10 @@ const client = new Client({
 
 client.connect();
 
+app.get("/test", async (req, res) => {
+  res.json({ message: "hello world" });
+});
+
 // POST request to add a customer
 app.post("/add-customer", async (req, res) => {
   const { quality, service, money_value, phone_no } = req.body;
