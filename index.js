@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const { Client } = require("pg");
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 const cors = require("cors");
 app.use(cors());
@@ -38,7 +38,7 @@ client.connect();
 app.get("/", async (req, res) => {
   try {
     // Query to select all data from the table
-    const query = "SELECT * FROM pg_customers;";
+    const query = "SELECT * FROM pj_customers;";
     const result = await client.query(query);
 
     // Send the result rows as JSON
@@ -51,6 +51,51 @@ app.get("/", async (req, res) => {
 
 app.get("/test", async (req, res) => {
   res.json({ message: "hello world" });
+});
+
+// POST route to check if phone number exists in database
+app.post("/check-phone", async (req, res) => {
+  const { phone } = req.body;
+
+  try {
+    // Function to check if a phone number exists in the database
+    const query = "SELECT EXISTS (SELECT 1 FROM pj_customers WHERE phone = $1)";
+    const values = [phone];
+    const dbRes = await client.query(query, values);
+
+    let exists = dbRes.rows[0].exists;
+
+    res.json({ exists });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database query failed" });
+  }
+});
+
+app.post("/send-otp", async (req, res) => {
+  const { otp, phone } = req.body;
+
+  const url = "https://www.fast2sms.com/dev/bulkV2";
+  const variables = otp;
+  const route = "otp";
+  const apiKey = process.env.apiKey; // Replace with your actual API key
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: apiKey,
+      },
+      body: `variables_values=${variables}&route=${route}&numbers=${phone}`,
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Failed to send OTP" });
+  }
 });
 
 // POST request to add a customer
@@ -67,7 +112,7 @@ app.post("/add-customer", async (req, res) => {
   }
 
   const query = `
-    INSERT INTO pg_customers (quality, service, money_value, phone)
+    INSERT INTO pj_customers (quality, service, money_value, phone)
     VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
